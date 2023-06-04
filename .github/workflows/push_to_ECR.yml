@@ -1,5 +1,5 @@
 name: Deploy to ECR
-# updated secrets
+
 on: 
   push:
     branches: [ master ]
@@ -11,7 +11,6 @@ jobs:
     name: Build Image
     runs-on: ubuntu-latest
 
-   
     steps:
 
     - name: Check out code
@@ -25,21 +24,41 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         AWS_REGION: us-east-1
-
-    - name: Build, test, tag, and push image to Amazon ECR
+    # Get short sha to have a unique identifier of image tag
+    - name: Get short sha and set IMAGE_TAG variable
+      run: |
+        echo "IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+    # mysql image
+    - name: Build, test, tag, and push mysql image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: clo835_assignment1-repo
-        IMAGE_TAG: v0.1
+        ECR_REPOSITORY: mysql
       run: |
-        # cd Chapter02/kubia/
-        ls -ltra
         # Docker build command
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile_mysql .
+        
         # Unit test
         # docker run -d -p 80:8080 --name nodeapp $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         # docker ps
         # echo "Pause for 10 seconds to let container start"
         # sleep 10
         # curl localhost -vvv
+        
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    # webapp image
+    - name: Build, test, tag, and push webapp image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: webapp
+      run: |
+        # Docker build command
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
+        
+        # Unit test
+        # docker run -d -p 80:8080 --name nodeapp $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        # docker ps
+        # echo "Pause for 10 seconds to let container start"
+        # sleep 10
+        # curl localhost -vvv
+        
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
