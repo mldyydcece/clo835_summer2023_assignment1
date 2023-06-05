@@ -5,16 +5,13 @@ on:
     branches: [ master ]
 
 jobs:
-  
   build:
-    
-    name: Build Image
+    name: Build and Push Images
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
     - name: Login to Amazon ECR
       id: login-ecr
@@ -24,28 +21,23 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
         AWS_REGION: us-east-1
-    # Get short sha to have a unique identifier of image tag
-    - name: Get short sha and set IMAGE_TAG variable
-      run: |
-        echo "IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
-    # mysql image
-    - name: Build, test, tag, and push mysql image to Amazon ECR
+
+    - name: Build, test, tag, and push application image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: mysql
+        ECR_REPOSITORY: myodico-dev-ecr-repo
+        APPLICATION_IMAGE_TAG: v2.1
       run: |
-        # Docker build command
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile_mysql .
         
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-    # webapp image
-    - name: Build, test, tag, and push webapp image to Amazon ECR
+        # Docker build and push application image
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:application-$APPLICATION_IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:application-$APPLICATION_IMAGE_TAG
+    - name: Build, test, tag, and push MySQL image to Amazon ECR
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: webapp
+        ECR_REPOSITORY: myodico-dev-ecr-repo
+        MYSQL_IMAGE_TAG: v5.6
       run: |
-        # Docker build command
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile .
-        
-        
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        # Docker build and push MySQL image
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:mysql-$MYSQL_IMAGE_TAG -f Dockerfile_mysql .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:mysql-$MYSQL_IMAGE_TAG
