@@ -3,7 +3,6 @@ name: Deploy to ECR
 on:
   push:
     branches: [Master]
-
 jobs:
   build:
     name: Build Image
