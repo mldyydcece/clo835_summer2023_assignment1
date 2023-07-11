@@ -26,7 +26,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: myodico-webapp
-        APPLICATION_IMAGE_TAG: v2.1
+        APPLICATION_IMAGE_TAG: v2.2
       run: |
         
         # Docker build and push application image
